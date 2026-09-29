@@ -45,8 +45,8 @@ def load_dashboard_config(path: Path) -> dict:
         raise DashboardConfigError("Thiếu object 'dashboard'")
     if dashboard.get("schema_version") != 1:
         raise DashboardConfigError("'dashboard.schema_version' phải bằng 1")
-    if dashboard.get("time_range_minutes") != 60:
-        raise DashboardConfigError("'dashboard.time_range_minutes' phải bằng 60")
+    if dashboard.get("time_range") != "all":
+        raise DashboardConfigError("'dashboard.time_range' phải bằng 'all'")
     refresh_seconds = dashboard.get("refresh_seconds")
     if not isinstance(refresh_seconds, int) or not 15 <= refresh_seconds <= 30:
         raise DashboardConfigError("'dashboard.refresh_seconds' phải nằm trong khoảng 15–30")

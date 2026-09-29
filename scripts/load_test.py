@@ -14,14 +14,14 @@ if str(REPO_ROOT) not in sys.path:
 from app.challenge import load_challenge, ordered_queries
 from app.cli import configure_utf8_stdio
 
-BASE_URL = "http://127.0.0.1:8000"
+DEFAULT_BASE_URL = "http://127.0.0.1:8000"
 QUERIES = Path("data/sample_queries.jsonl")
 
 
-def send_request(client: httpx.Client, payload: dict) -> None:
+def send_request(client: httpx.Client, payload: dict, base_url: str) -> None:
     try:
         start = time.perf_counter()
-        r = client.post(f"{BASE_URL}/chat", json=payload)
+        r = client.post(f"{base_url.rstrip('/')}/chat", json=payload)
         latency = (time.perf_counter() - start) * 1000
         print(f"[{r.status_code}] {r.json().get('correlation_id')} | {payload['feature']} | {latency:.1f}ms")
     except Exception as e:
@@ -32,15 +32,22 @@ def main() -> None:
     configure_utf8_stdio()
     parser = argparse.ArgumentParser()
     parser.add_argument("--concurrency", type=int, default=1, help="Number of concurrent requests")
+    parser.add_argument("--base-url", default=DEFAULT_BASE_URL, help="API base URL (default: %(default)s)")
     parser.add_argument(
         "--challenge",
         action="store_true",
         help="Dùng input chính thức trong config/challenge.json sau khi được release.",
     )
+    parser.add_argument(
+        "--challenge-file",
+        type=Path,
+        default=Path("config/challenge.json"),
+        help="Official released challenge JSON (default: %(default)s)",
+    )
     args = parser.parse_args()
 
     if args.challenge:
-        challenge = load_challenge()
+        challenge = load_challenge(args.challenge_file)
         payloads = ordered_queries(challenge)
         print(f"Challenge: {challenge.challenge_id} | Cohort: {challenge.cohort}")
     else:
@@ -53,11 +60,11 @@ def main() -> None:
     with httpx.Client(timeout=30.0) as client:
         if args.concurrency > 1:
             with concurrent.futures.ThreadPoolExecutor(max_workers=args.concurrency) as executor:
-                futures = [executor.submit(send_request, client, payload) for payload in payloads]
+                futures = [executor.submit(send_request, client, payload, args.base_url) for payload in payloads]
                 concurrent.futures.wait(futures)
         else:
             for payload in payloads:
-                send_request(client, payload)
+                send_request(client, payload, args.base_url)
 
 
 if __name__ == "__main__":

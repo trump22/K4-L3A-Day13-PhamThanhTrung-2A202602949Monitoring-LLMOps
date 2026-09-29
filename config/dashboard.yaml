@@ -1,7 +1,7 @@
 dashboard:
   schema_version: 1
   title: K4-L3A Day 13 Monitoring & LLMOps
-  time_range_minutes: 60
+  time_range: all
   refresh_seconds: 30
   panels:
     - id: latency

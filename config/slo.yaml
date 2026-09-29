@@ -7,7 +7,11 @@ primary_slo:
     total_event: 'event == "request_received"'
   target_percent: 99.5
   error_budget_percent: 0.5
-  note: Học viên phải giải thích hoặc điều chỉnh ngưỡng bằng baseline của mình.
+  error_budget:
+    calculation: "(100 - 99.5)% x total requests in the 28-day window"
+    allowed_bad_requests_per_10000: 50
+    interpretation: "A request consumes budget when it fails or exceeds 3000 ms."
+  note: "The 3000 ms latency threshold is above the clean baseline P95 (~2160 ms), leaving room for normal variation while detecting user-visible tail latency."
 guardrails:
   error_rate_pct_max: 2
   daily_cost_usd_max: 2.5
